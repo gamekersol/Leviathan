@@ -32,11 +32,30 @@ Draw :: proc (name : string, posX, posY : i32, anchor := Anchor.Top_Left){
     rl.DrawTexture(textures[name], posX , posY, rl.WHITE)
 }
 
+fiheyeShader : rl.Shader
+maskShader : rl.Shader
+
 UploadAllTextures :: proc (){
     if textures == nil do textures = make (map[string]rl.Texture)
 
     textures["bg"] = LoadTexture("bg")
+    fiheyeShader = rl.LoadShader(nil, "Shaders/fiheye.fs")
+    maskShader = rl.LoadShader(nil, "Shaders/mask.fs")
+    // Get shader locations
+    // int outlineSizeLoc = GetShaderLocation(shdrOutline, "outlineSize");
+    // int outlineColorLoc = GetShaderLocation(shdrOutline, "outlineColor");
+    // int textureSizeLoc = GetShaderLocation(shdrOutline, "textureSize");
+
+    // // Set shader values (they can be changed later)
+    // SetShaderValue(shdrOutline, outlineSizeLoc, &outlineSize, SHADER_UNIFORM_FLOAT);
+    // SetShaderValue(shdrOutline, outlineColorLoc, outlineColor, SHADER_UNIFORM_VEC4);
+    // SetShaderValue(shdrOutline, textureSizeLoc, textureSize, SHADER_UNIFORM_VEC2);
+
+    //BeginShaderMode(shdrOutline);
+
     textures["screen"] = LoadTexture("ScreenArea")
     textures["mainPanel"] = LoadTexture("Panel")
+    textures["screenMask"] = LoadTexture("screen_mask")
+    for i in 0..<1 do textures[fmt.aprintf("frame%i",i)] = LoadTexture(fmt.aprintf("Frames/frame%i",i))
 }
 

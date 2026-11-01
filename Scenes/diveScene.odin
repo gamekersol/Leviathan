@@ -19,20 +19,47 @@ Screen :: struct{
 screens : [6]Screen
 screenIndex := 2
 move_input : [2]f32
+maskBg : rl.RenderTexture
 
 diveScene := Scene{
     Init = proc (){
+
+        // SOUNDS
         noise2 = rl.LoadSound("Audio/noise_2.mp3")
         arrowSound = rl.LoadSound("Audio/Button_Arrow.ogg")
         specSound = rl.LoadSound("Audio/Button_Special.mp3")
         for &sc in screens do sc = {{rand.float32_range(200, 1700),rand.float32_range(200, 800)},true}
         rl.SetSoundPan(noise2, -0.5)
+
+        maskBg = rl.LoadRenderTexture(i32(sh.wSize.x), i32(sh.wSize.y))
     },
     Update = proc (delta_time : f32){
         // DRAW
         {
+            // LIGHTEN FOR BG
+            rl.BeginTextureMode(maskBg)
+            rl.ClearBackground(rl.BLACK)
+            rl.BeginBlendMode(.ADDITIVE)
+            for sc in screens do if sc.enabled do tx.Draw("screenMask", i32(sc.pos.x) - 180, -i32(sc.pos.y) + 700)
+            rl.EndBlendMode()
+            rl.EndTextureMode()
+
+            // IMPORTANT
             tx.Draw("bg",0,0)
+
+            // UNEDR MASK
+            loc := rl.GetShaderLocation(tx.maskShader, "mask")
+            rl.SetShaderValueTexture(tx.maskShader, loc, maskBg.texture)
+            rl.BeginShaderMode(tx.maskShader)
+            tx.Draw("frame0",0,0)
+            rl.EndShaderMode()
+
+
+            loc = rl.GetShaderLocation(tx.fiheyeShader, "resolution")
+            rl.SetShaderValue(tx.fiheyeShader, loc, &sh.wSize, .VEC2)
+            rl.BeginShaderMode(tx.fiheyeShader)
             for sc in screens do if sc.enabled do tx.Draw("screen", i32(sc.pos.x), i32(sc.pos.y))
+            rl.EndShaderMode()
             tx.Draw("mainPanel", 300, 930) 
         }
         // INPUTS
