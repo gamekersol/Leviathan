@@ -26,10 +26,10 @@ anchor_factor := [Anchor][2]f32{
     .Bottom_Right = {1,   1},
 }
 
-Draw :: proc (name : string, posX, posY : i32, anchor := Anchor.Top_Left){
+Draw :: proc (name : string, posX, posY : i32, anchor := Anchor.Top_Left, color := rl.WHITE){
     posX := posX + i32(anchor_factor[anchor].x * Shared.wSize.x)
     posY := posY + i32(anchor_factor[anchor].y * Shared.wSize.y)
-    rl.DrawTexture(textures[name], posX , posY, rl.WHITE)
+    rl.DrawTexture(textures[name], posX , posY, color)
 }
 
 fiheyeShader : rl.Shader

@@ -9,7 +9,7 @@ import "core:fmt"
 MOVE_SPEED :: 80 // per second
 
 // SOUNDS
-noise2,arrowSound,specSound,switchSound1,switchSound2,switchSound3,switchSound4 : rl.Sound
+noise2,arrowSound,specSound,switchSound1,switchSound2,switchSound3,switchSound4,flashSound,denySound : rl.Sound
 
 // SCREEN VARS
 Screen :: struct{
@@ -28,7 +28,9 @@ diveScene := Scene{
         noise2 = rl.LoadSound("Audio/noise_2.mp3")
         arrowSound = rl.LoadSound("Audio/Button_Arrow.ogg")
         specSound = rl.LoadSound("Audio/Button_Special.mp3")
-        for &sc in screens do sc = {{rand.float32_range(200, 1700),rand.float32_range(200, 800)},true}
+        flashSound = rl.LoadSound("Audio/flash.ogg")
+        denySound = rl.LoadSound("Audio/deny.ogg")
+        for &sc in screens do sc = {{rand.float32_range(200, 1700),rand.float32_range(200, 800)},false,}
         rl.SetSoundPan(noise2, -0.5)
 
         maskBg = rl.LoadRenderTexture(i32(sh.wSize.x), i32(sh.wSize.y))
@@ -40,7 +42,10 @@ diveScene := Scene{
             rl.BeginTextureMode(maskBg)
             rl.ClearBackground(rl.BLACK)
             rl.BeginBlendMode(.ADDITIVE)
-            for sc in screens do if sc.enabled do tx.Draw("screenMask", i32(sc.pos.x) - 180, -i32(sc.pos.y) + 700)
+
+            for sc in screens do if sc.enabled do tx.Draw("screenMask", i32(sc.pos.x) - 180, -i32(sc.pos.y) + 700,
+            color = rl.ColorAlpha(rl.WHITE, (scanStartTime / SCAN_TIME) * scanStartTime / SCAN_TIME))
+
             rl.EndBlendMode()
             rl.EndTextureMode()
 
@@ -118,16 +123,18 @@ diveScene := Scene{
                 if sh.CheckInputArea(.square, {1450 + 25 * 1, 1025 - 30}, 24) do screenIndex = 5
             }
 
-
             // CHANGE STATE OF SCREEN
             if rl.IsMouseButtonPressed(.LEFT) {
-            if sh.CheckInputArea(.circle, {980, 1000}, 27) {
-                screens[screenIndex].enabled = !screens[screenIndex].enabled
-                rl.PlaySound(specSound)
-            }
-            // RIGHT BUTTON DOESNT WORK, IT BROKEN BY LORE (I FORGOT WHAT IT SHOULD DO)
-            // ADD HOW MANY TIMES YOU PRESSED IT IN FINAL
-            //if sh.CheckInputArea(.square, {985, 9080}, 27) do screenIndex = 0
+                if sh.CheckInputArea(.circle, {980, 987}, 27) {
+                    screens[screenIndex].enabled = !screens[screenIndex].enabled
+                    rl.PlaySound(specSound)
+                }
+                // RIGHT BUTTON DOESNT WORK, IT BROKEN BY LORE (I FORGOT WHAT IT SHOULD DO)
+                // ADD HOW MANY TIMES YOU PRESSED IT IN FINAL
+                if sh.CheckInputArea(.circle, {1040, 987}, 27) {
+                    if !isScaning do scan()
+                    else do rl.PlaySound(denySound)
+                }
             }
         }
         // CHANGES
@@ -135,5 +142,22 @@ diveScene := Scene{
             sc_delta : [2]f32 = {MOVE_SPEED * delta_time * move_input.x,  MOVE_SPEED * delta_time * move_input.y}
             screens[screenIndex].pos = {screens[screenIndex].pos.x + sc_delta.x, screens[screenIndex].pos.y + sc_delta.y}
         }
+        // ACCUMULATORS
+        {
+            if isScaning do scanStartTime += delta_time
+            if scanStartTime > SCAN_TIME do stopScan()
+        }
     }
+}
+isScaning := false;
+scanStartTime : f32
+SCAN_TIME :: 0.8
+
+scan :: proc (){
+    isScaning = true
+    rl.PlaySound(flashSound)
+}
+stopScan :: proc(){
+    isScaning = false
+    scanStartTime = 0
 }
